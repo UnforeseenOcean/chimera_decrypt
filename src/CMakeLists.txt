@@ -9,4 +9,4 @@ set (hdrs
     wrapper.h
 )
 
-add_executable chimera_dec ${hdrs} ${srcs})
+add_executable (chimera_dec ${hdrs} ${srcs})
