@@ -96,8 +96,9 @@ bool rename_file(std::string filename)
 	if (ext == "crypt") {
 		MoveFileA(filename.c_str(), newname.c_str());
 		printf("Renamed decrypted file to: %s\n", newname.c_str());
+		return true;
 	}
-	return true;
+	return false;
 }
 
 int main(int argc, char *argv[])
