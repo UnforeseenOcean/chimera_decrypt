@@ -56,7 +56,7 @@ bool file_exist(const char* path)
 	return true;
 }
 
-bool search_priv_key(std::ifstream &infile, const char* path)
+bool search_priv_key(std::ifstream &infile, const char* file_path)
 {
 	t_DecryptFileWrapper func1 = loadDecryptFunc();
 	if (func1 == NULL) {
@@ -65,32 +65,39 @@ bool search_priv_key(std::ifstream &infile, const char* path)
 	}
 
 	std::string line;
-	BYTE *priv_key = NULL;
 	size_t key_len = 0;
 	size_t counter = 0;
 	while (std::getline(infile, line))
 	{
 		std::istringstream iss(line);
-		if (line.size() < (DEFAULT_KEY_LEN * 2)) break;
-
 		key_len = line.length() / 2;
-		printf("key num: %d len = %#x\n", counter++, key_len);
+		printf("key num: %d len = %#x = %d\n", counter++, key_len, key_len);
 
-		priv_key = HexToBytes(line);
+		BYTE *priv_key = HexToBytes(line);
 
-		printf("Trying to decrypt...\n");
-		if (func1(path, g_privKey, g_keyLen ))	{
+		if (func1(file_path, priv_key, DEFAULT_KEY_LEN)) {
+			printf("Success!\n");
 			if (save_to_file(OUT_KEY_FILE, line)) {
 				printf("Found key saved to the file: %s\n", OUT_KEY_FILE);
 			} else {
-				printf("[ERROR] Cannot save to the file: %s\n", path);
+				printf("[ERROR] Cannot save to the file: %s\n", file_path);
 			}
 			return true;
-		} else {
-			printf("Failed!\n");
 		}
 	}
 	return false;
+}
+
+bool rename_file(std::string filename)
+{
+	std::size_t found = filename.find_last_of(".");
+	std::string newname = filename.substr(0, found);
+	std::string ext = filename.substr(found+1);
+	if (ext == "crypt") {
+		MoveFileA(filename.c_str(), newname.c_str());
+		printf("Renamed decrypted file to: %s\n", newname.c_str());
+	}
+	return true;
 }
 
 int main(int argc, char *argv[])
@@ -118,10 +125,12 @@ int main(int argc, char *argv[])
 	}
 
 	if (search_priv_key(infile, path)) {
+		rename_file(path);
 		printf("Hurray! The set contains your key!\n");
 	} else {
 		printf("Sorry! None of the keys fit to your file!\n");
 	}
+
 	system("pause");
 	return 0;
 }
